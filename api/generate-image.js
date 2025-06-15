@@ -5,7 +5,7 @@
 // IMPORTANT: DO NOT DEPLOY THIS VERSION TO VERCEL OR PUSH TO GITHUB!
 // This is for local testing convenience ONLY.
 // Replace 'YOUR_ACTUAL_GEMINI_API_KEY_HERE' with your real key.
-const GEMINI_API_KEY = 'AIzaSyC6uD4XGV38bMTdVzd3lQPf2qYLgCQSsys'; // <<< REPLACE THIS LINE
+const GEMINI_API_KEY = ''; // <<< REPLACE THIS LINE
 
 // No dotenv import is needed when the key is hardcoded.
 // const { GoogleGenerativeAI } = require("@google/generative-ai"); // Ensure this line is present and uncommented
