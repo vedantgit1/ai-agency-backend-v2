@@ -25,16 +25,20 @@ export default async function handler(req, res) {
 
     const data = await response.json()
 
+    // ✅ DEBUG log
+    console.log("Gemini API Raw Response:", JSON.stringify(data, null, 2))
+
     if (data.candidates && data.candidates[0]) {
       const generatedText = data.candidates[0].content.parts[0].text
       return res.status(200).json({ response: generatedText })
     } else {
-      return res.status(500).json({ error: "Failed to generate content from Gemini." })
+      return res.status(500).json({ error: "No valid candidates returned", raw: data })
     }
   } catch (err) {
     console.error("Gemini API Error:", err)
     return res.status(500).json({ error: "Internal Server Error" })
   }
 }
+
 
 
