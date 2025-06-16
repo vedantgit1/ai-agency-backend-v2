@@ -8,7 +8,9 @@ export default async function handler(req, res) {
 
   try {
     const { prompt } = req.body;
-    const apiKey = process.env.GEMINI_API_KEY;
+
+    // ⚠️ Replace this with your actual Gemini API key
+    const apiKey = "YOUR_GEMINI_API_KEY_HERE";
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
