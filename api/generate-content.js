@@ -8,22 +8,18 @@ export default async function handler(req, res) {
 
   try {
     const { prompt } = req.body;
-
-    // ⚠️ Replace this with your actual Gemini API key
-    const apiKey = "AIzaSyC6uD4XGV38bMTdVzd3lQPf2qYLgCQSsys";
+    const apiKey = process.env.GEMINI_API_KEY;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [
             {
               role: "user",
-              parts: [{ text: prompt }],
+              parts: [{ text: prompt || "Say something about AI marketing." }],
             },
           ],
         }),
@@ -31,21 +27,14 @@ export default async function handler(req, res) {
     );
 
     const data = await response.json();
-
-    console.log("Gemini API Response:", JSON.stringify(data, null, 2));
+    console.log("Gemini Flash response:", data);
 
     const generatedText =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      data?.candidates?.[0]?.output ||
-      null;
+      data?.candidates?.[0]?.content?.parts?.[0]?.text || "No content returned from Gemini.";
 
-    if (generatedText) {
-      return res.status(200).json({ response: generatedText });
-    } else {
-      return res.status(200).json({ response: "No content returned from Gemini." });
-    }
+    res.status(200).json({ response: generatedText });
   } catch (err) {
-    console.error("Gemini API Error:", err);
-    return res.status(500).json({ error: "Internal Server Error" });
+    console.error("Gemini Error:", err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 }
