@@ -1,51 +1,36 @@
-// File: /api/generate-content.js
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export const config = {
-  runtime: 'edge',
-};
+// Load your Gemini API key from env
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-export default async function handler(req) {
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Only POST requests allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
+// Utility to read raw body (needed for Vercel's native req object)
+async function getRequestBody(req) {
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(chunk);
+  }
+  const body = Buffer.concat(chunks).toString();
+  return JSON.parse(body);
+}
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    const { prompt } = await req.json(); // ✅ This works in Edge runtime
+    const body = await getRequestBody(req);
+    const prompt = body.prompt || "Generate something creative";
 
-    const apiKey = process.env.GEMINI_API_KEY; // Make sure this is set in Vercel env
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [{ text: prompt }],
-          },
-        ],
-      }),
-    });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
 
-    const result = await response.json();
-
-    const output = result?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated';
-
-    return new Response(JSON.stringify({ output }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    res.status(200).json({ result: text });
   } catch (error) {
-    console.error('Error generating content:', error);
-
-    return new Response(JSON.stringify({ error: 'Failed to generate content' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.error("Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 }
