@@ -1,36 +1,27 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// Load your Gemini API key from env
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-// Utility to read raw body (needed for Vercel's native req object)
-async function getRequestBody(req) {
-  const chunks = [];
-  for await (const chunk of req) {
-    chunks.push(chunk);
-  }
-  const body = Buffer.concat(chunks).toString();
-  return JSON.parse(body);
-}
-
 export default async function handler(req, res) {
+  // Allow CORS
+  res.setHeader("Access-Control-Allow-Origin", "*")
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS")
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type")
+
+  // Handle preflight request
+  if (req.method === "OPTIONS") {
+    return res.status(200).end()
+  }
+
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ error: "Method not allowed" })
   }
 
   try {
-    const body = await getRequestBody(req);
-    const prompt = body.prompt || "Generate something creative";
+    const { prompt } = req.body
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Replace with Gemini call logic (dummy for now)
+    const result = `Generated content for: "${prompt}"`
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-
-    res.status(200).json({ result: text });
-  } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(200).json({ response: result })
+  } catch (err) {
+    res.status(500).json({ error: "Internal Server Error" })
   }
 }
+
