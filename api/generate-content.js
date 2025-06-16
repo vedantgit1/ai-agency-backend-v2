@@ -1,19 +1,51 @@
-// /api/generate-content.js
-export default async function handler(req, res) {
-  const body = await req.json();
+// File: /api/generate-content.js
 
-  const prompt = `Generate a week's worth of social media content for a brand called "${body.brand}" in a ${body.tone} tone.`;
+export const config = {
+  runtime: 'edge',
+};
 
-  const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyC6uD4XGV38bMTdVzd3lQPf2qYLgCQSsys", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }]
-    })
-  });
+export default async function handler(req) {
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Only POST requests allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
-  const data = await response.json();
-  const result = data.candidates?.[0]?.content?.parts?.[0]?.text || "No result.";
+  try {
+    const { prompt } = await req.json(); // ✅ This works in Edge runtime
 
-  res.status(200).json({ result });
+    const apiKey = process.env.GEMINI_API_KEY; // Make sure this is set in Vercel env
+
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [{ text: prompt }],
+          },
+        ],
+      }),
+    });
+
+    const result = await response.json();
+
+    const output = result?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated';
+
+    return new Response(JSON.stringify({ output }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Error generating content:', error);
+
+    return new Response(JSON.stringify({ error: 'Failed to generate content' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 }
